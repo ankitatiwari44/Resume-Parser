@@ -9,35 +9,36 @@ app = Flask(__name__)
 
 
 # === Utility Function: Download file if it doesn't exist ===
+import requests
 
-def download_if_not_exists(file_path, url):
-    if not os.path.exists(file_path):
-        print(f"Downloading {file_path} from {url}")
-        dir_name = os.path.dirname(file_path)
-        if dir_name:
-            os.makedirs(dir_name, exist_ok=True)
-        response = requests.get(url)
-        if response.status_code == 200:
-            # Check if content looks like a pickle file (binary data)
-            if response.headers.get('Content-Type') in ['application/octet-stream', 'application/x-python-pickle']:
-                with open(file_path, 'wb') as f:
-                    f.write(response.content)
-                print(f"Downloaded {file_path} successfully")
-            else:
-                # Save the file to inspect if you want:
-                with open(file_path, 'wb') as f:
-                    f.write(response.content)
-                raise Exception(f"Downloaded file is not a pickle file. Content-Type: {response.headers.get('Content-Type')}")
-        else:
-            raise Exception(f"Failed to download {file_path}: HTTP {response.status_code}")
+def download_file_from_google_drive(id, destination):
+    URL = "https://docs.google.com/uc?export=download"
+
+    session = requests.Session()
+    response = session.get(URL, params={'id': id}, stream=True)
+    
+    def get_confirm_token(response):
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                return value
+        return None
+
+    token = get_confirm_token(response)
+    if token:
+        params = {'id': id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(32768):
+            if chunk:
+                f.write(chunk)
 
 
 
-# === File Download Links (Replace with your actual direct download links) ===
 # === File Download Links (Replace with your actual direct download links) ===
 MODEL_FILES = {
-    'rf_classifier_categorization.pkl': "https://drive.google.com/uc?export=download&id=1U3UPqSaY9ZqJzVBM2szS54aCZcVJkN5t",
-    'rf_classifier_job_recommendation.pkl': "https://drive.google.com/uc?export=download&id=1LutorAG1KBPSdsZRp5W9e8sz60TgosNs",
+    'rf_classifier_categorization.pkl': "1U3UPqSaY9ZqJzVBM2szS54aCZcVJkN5t",
+    'rf_classifier_job_recommendation.pkl': "1LutorAG1KBPSdsZRp5W9e8sz60TgosNs",
 }
 
 
