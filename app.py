@@ -9,19 +9,28 @@ app = Flask(__name__)
 
 
 # === Utility Function: Download file if it doesn't exist ===
+
 def download_if_not_exists(file_path, url):
     if not os.path.exists(file_path):
         print(f"Downloading {file_path} from {url}")
         dir_name = os.path.dirname(file_path)
-        if dir_name:  # only create if not empty
+        if dir_name:
             os.makedirs(dir_name, exist_ok=True)
         response = requests.get(url)
         if response.status_code == 200:
-            with open(file_path, 'wb') as f:
-                f.write(response.content)
-            print(f"Downloaded: {file_path}")
+            # Check if content looks like a pickle file (binary data)
+            if response.headers.get('Content-Type') in ['application/octet-stream', 'application/x-python-pickle']:
+                with open(file_path, 'wb') as f:
+                    f.write(response.content)
+                print(f"Downloaded {file_path} successfully")
+            else:
+                # Save the file to inspect if you want:
+                with open(file_path, 'wb') as f:
+                    f.write(response.content)
+                raise Exception(f"Downloaded file is not a pickle file. Content-Type: {response.headers.get('Content-Type')}")
         else:
-            raise Exception(f"Failed to download {file_path}: Status code {response.status_code}")
+            raise Exception(f"Failed to download {file_path}: HTTP {response.status_code}")
+
 
 
 # === File Download Links (Replace with your actual direct download links) ===
