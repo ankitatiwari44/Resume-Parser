@@ -2,6 +2,7 @@ from flask import Flask, request, render_template
 from PyPDF2 import PdfReader
 import re
 import pickle
+import requests
 
 import os
 app = Flask(__name__)
