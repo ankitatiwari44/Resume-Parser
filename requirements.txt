@@ -7,3 +7,4 @@ flask
 PyPDF2
 pdfminer.six
 gunicorn
+requests
