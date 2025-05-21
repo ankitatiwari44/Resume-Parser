@@ -35,8 +35,8 @@ def download_if_not_exists(file_path, url):
 
 # === File Download Links (Replace with your actual direct download links) ===
 MODEL_FILES = {
-    'rf_classifier_categorization.pkl': 'https://drive.google.com/uc?export=download&id=1LutorAG1KBPSdsZRp5W9e8sz60TgosNs',
-    'rf_classifier_job_recommendation.pkl': 'https://drive.google.com/uc?export=download&id=1U3UPqSaY9ZqJzVBM2szS54aCZcVJkN5t',
+    'rf_classifier_categorization.pkl': url = "https://drive.google.com/uc?export=download&id=1U3UPqSaY9ZqJzVBM2szS54aCZcVJkN5t",
+    'rf_classifier_job_recommendation.pkl': "https://drive.google.com/uc?export=download&id=1LutorAG1KBPSdsZRp5W9e8sz60TgosNs",
 
 }
 
