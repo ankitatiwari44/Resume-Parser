@@ -12,7 +12,9 @@ app = Flask(__name__)
 def download_if_not_exists(file_path, url):
     if not os.path.exists(file_path):
         print(f"Downloading {file_path} from {url}")
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        dir_name = os.path.dirname(file_path)
+        if dir_name:  # only create if not empty
+            os.makedirs(dir_name, exist_ok=True)
         response = requests.get(url)
         if response.status_code == 200:
             with open(file_path, 'wb') as f:
@@ -20,6 +22,7 @@ def download_if_not_exists(file_path, url):
             print(f"Downloaded: {file_path}")
         else:
             raise Exception(f"Failed to download {file_path}: Status code {response.status_code}")
+
 
 # === File Download Links (Replace with your actual direct download links) ===
 MODEL_FILES = {
