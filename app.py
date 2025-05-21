@@ -9,30 +9,33 @@ app = Flask(__name__)
 
 
 # === Utility Function: Download file if it doesn't exist ===
+import os
 import requests
 
-def download_file_from_google_drive(id, destination):
+def download_file_from_google_drive(file_id, destination):
     URL = "https://docs.google.com/uc?export=download"
-
     session = requests.Session()
-    response = session.get(URL, params={'id': id}, stream=True)
-    
-    def get_confirm_token(response):
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
-                return value
-        return None
 
-    token = get_confirm_token(response)
+    response = session.get(URL, params={'id': file_id}, stream=True)
+    token = None
+
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            token = value
+            break
+
     if token:
-        params = {'id': id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
+        response = session.get(URL, params={'id': file_id, 'confirm': token}, stream=True)
 
     with open(destination, "wb") as f:
         for chunk in response.iter_content(32768):
             if chunk:
                 f.write(chunk)
 
+def download_if_not_exists(path, file_id):
+    if not os.path.exists(path):
+        print(f"Downloading {path} from Google Drive...")
+        download_file_from_google_drive(file_id, path)
 
 
 # === File Download Links (Replace with your actual direct download links) ===
@@ -41,10 +44,11 @@ MODEL_FILES = {
     'rf_classifier_job_recommendation.pkl': "1LutorAG1KBPSdsZRp5W9e8sz60TgosNs",
 }
 
+for filename, file_id in MODEL_FILES.items():
+    path = os.path.join("models", filename)
+    os.makedirs("models", exist_ok=True)
+    download_if_not_exists(path, file_id)
 
-# === Download all model files ===
-for path, url in MODEL_FILES.items():
-    download_if_not_exists(path, url)
 
 # === Load Models ===
 rf_classifier_categorization = pickle.load(open('rf_classifier_categorization.pkl', 'rb'))
