@@ -6,11 +6,37 @@ import pickle
 
 app = Flask(__name__)
 
-# Load models===========================================================================================================
-rf_classifier_categorization = pickle.load(open('models/rf_classifier_categorization.pkl', 'rb'))
-tfidf_vectorizer_categorization = pickle.load(open('models/tfidf_vectorizer_categorization.pkl', 'rb'))
-rf_classifier_job_recommendation = pickle.load(open('models/rf_classifier_job_recommendation.pkl', 'rb'))
-tfidf_vectorizer_job_recommendation = pickle.load(open('models/tfidf_vectorizer_job_recommendation.pkl', 'rb'))
+
+# === Utility Function: Download file if it doesn't exist ===
+def download_if_not_exists(file_path, url):
+    if not os.path.exists(file_path):
+        print(f"Downloading {file_path} from {url}")
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(file_path, 'wb') as f:
+                f.write(response.content)
+            print(f"Downloaded: {file_path}")
+        else:
+            raise Exception(f"Failed to download {file_path}: Status code {response.status_code}")
+
+# === File Download Links (Replace with your actual direct download links) ===
+MODEL_FILES = {
+    'rf_classifier_categorization.pkl': 'https://drive.google.com/uc?export=download&id=1LutorAG1KBPSdsZRp5W9e8sz60TgosNs',
+    'rf_classifier_job_recommendation.pkl': 'https://drive.google.com/uc?export=download&id=1U3UPqSaY9ZqJzVBM2szS54aCZcVJkN5t
+',
+}
+
+# === Download all model files ===
+for path, url in MODEL_FILES.items():
+    download_if_not_exists(path, url)
+
+# === Load Models ===
+rf_classifier_categorization = pickle.load(open('rf_classifier_categorization.pkl', 'rb'))
+tfidf_vectorizer_categorization = pickle.load(open('tfidf_vectorizer_categorization.pkl', 'rb'))
+rf_classifier_job_recommendation = pickle.load(open('rf_classifier_job_recommendation.pkl', 'rb'))
+tfidf_vectorizer_job_recommendation = pickle.load(open('tfidf_vectorizer_job_recommendation.pkl', 'rb'))
+
 
 # Clean resume==========================================================================================================
 def cleanResume(txt):
