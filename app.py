@@ -1,17 +1,11 @@
 from flask import Flask, request, render_template
 from PyPDF2 import PdfReader
 import re
+import os
+import requests
 import pickle
-import requests
 
-import os
-app = Flask(__name__)
-
-
-# === Utility Function: Download file if it doesn't exist ===
-import os
-import requests
-
+# === Helper Functions ===
 def download_file_from_google_drive(file_id, destination):
     URL = "https://docs.google.com/uc?export=download"
     session = requests.Session()
@@ -37,26 +31,26 @@ def download_if_not_exists(path, file_id):
         print(f"Downloading {path} from Google Drive...")
         download_file_from_google_drive(file_id, path)
 
-
-# === File Download Links (Replace with your actual direct download links) ===
+# === File IDs from Google Drive ===
 MODEL_FILES = {
     'rf_classifier_categorization.pkl': "1U3UPqSaY9ZqJzVBM2szS54aCZcVJkN5t",
     'rf_classifier_job_recommendation.pkl': "1LutorAG1KBPSdsZRp5W9e8sz60TgosNs",
 }
 
+# === Download models if needed ===
+os.makedirs("models", exist_ok=True)
+
 for filename, file_id in MODEL_FILES.items():
-    path = os.path.join("models", filename)
-    os.makedirs("models", exist_ok=True)
-    download_if_not_exists(path, file_id)
+    filepath = os.path.join("models", filename)
+    download_if_not_exists(filepath, file_id)
 
-
-# === Load Models ===
-rf_classifier_categorization = pickle.load(open('rf_classifier_categorization.pkl', 'rb'))
+# === Load models ===
+rf_classifier_categorization = pickle.load(open('models/rf_classifier_categorization.pkl', 'rb'))
+rf_classifier_job_recommendation = pickle.load(open('models/rf_classifier_job_recommendation.pkl', 'rb'))
 tfidf_vectorizer_categorization = pickle.load(open('tfidf_vectorizer_categorization.pkl', 'rb'))
-rf_classifier_job_recommendation = pickle.load(open('rf_classifier_job_recommendation.pkl', 'rb'))
 tfidf_vectorizer_job_recommendation = pickle.load(open('tfidf_vectorizer_job_recommendation.pkl', 'rb'))
 
-
+app = Flask(__name__)
 # Clean resume==========================================================================================================
 def cleanResume(txt):
     cleanText = re.sub('http\S+\s', ' ', txt)
