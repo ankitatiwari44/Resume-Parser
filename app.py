@@ -5,22 +5,29 @@ import os
 import requests
 import pickle
 
-# === Helper Functions ===
+import os
+import requests
+import pickle
+
 def download_file_from_google_drive(file_id, destination):
     URL = "https://docs.google.com/uc?export=download"
     session = requests.Session()
-
     response = session.get(URL, params={'id': file_id}, stream=True)
-    token = None
+    
+    # Handle confirmation token (for large files)
+    def get_confirm_token(response):
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                return value
+        return None
 
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            token = value
-            break
+    token = get_confirm_token(response)
 
     if token:
-        response = session.get(URL, params={'id': file_id, 'confirm': token}, stream=True)
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
 
+    # Write to file
     with open(destination, "wb") as f:
         for chunk in response.iter_content(32768):
             if chunk:
@@ -30,23 +37,32 @@ def download_if_not_exists(path, file_id):
     if not os.path.exists(path):
         print(f"Downloading {path} from Google Drive...")
         download_file_from_google_drive(file_id, path)
+        print(f"Download complete: {path}")
 
-# === File IDs from Google Drive ===
+# === MODEL FILES ===
 MODEL_FILES = {
-    'rf_classifier_categorization.pkl': "1U3UPqSaY9ZqJzVBM2szS54aCZcVJkN5t",
-    'rf_classifier_job_recommendation.pkl': "1LutorAG1KBPSdsZRp5W9e8sz60TgosNs",
+    'rf_classifier_categorization.pkl': '1U3UPqSaY9ZqJzVBM2szS54aCZcVJkN5t',
+    'rf_classifier_job_recommendation.pkl': '1LutorAG1KBPSdsZRp5W9e8sz60TgosNs',
 }
 
-# === Download models if needed ===
+# === Ensure 'models' directory exists ===
 os.makedirs("models", exist_ok=True)
 
+# === Download and load models ===
 for filename, file_id in MODEL_FILES.items():
-    filepath = os.path.join("models", filename)
-    download_if_not_exists(filepath, file_id)
+    path = os.path.join("models", filename)
+    download_if_not_exists(path, file_id)
 
-# === Load models ===
-rf_classifier_categorization = pickle.load(open('models/rf_classifier_categorization.pkl', 'rb'))
-rf_classifier_job_recommendation = pickle.load(open('models/rf_classifier_job_recommendation.pkl', 'rb'))
+# === Load models safely ===
+try:
+    with open("models/rf_classifier_categorization.pkl", "rb") as f:
+        rf_classifier_categorization = pickle.load(f)
+    with open("models/rf_classifier_job_recommendation.pkl", "rb") as f:
+        rf_classifier_job_recommendation = pickle.load(f)
+except pickle.UnpicklingError as e:
+    raise Exception("Failed to load the model. It may not have downloaded properly. Check the file manually.") from e
+
+
 tfidf_vectorizer_categorization = pickle.load(open('tfidf_vectorizer_categorization.pkl', 'rb'))
 tfidf_vectorizer_job_recommendation = pickle.load(open('tfidf_vectorizer_job_recommendation.pkl', 'rb'))
 
